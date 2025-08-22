@@ -24,6 +24,7 @@ jobs:
       run: |
         sudo xcode-select -s /Applications/Xcode.app
         xcodebuild -version
+        xcrun simctl list devices --json
         
     - name: Grant execute permission for Gradle
       run: chmod +x gradlew
@@ -31,14 +32,29 @@ jobs:
     - name: Build Shared Module for iOS
       run: ./gradlew :shared:compileKotlinIosX64
       
-    - name: Build iOS App for Simulator
+    - name: List available simulators (for debugging)
+      run: xcrun simctl list devices | grep -E "(iPhone|iPad)" | head -20
+      
+    - name: Build iOS App for Simulator (Fixed)
       run: |
         cd iosApp
+        # Use a more specific destination that exists
         xcodebuild build \
           -scheme iosApp \
           -configuration Debug \
           -sdk iphonesimulator \
-          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+          -destination "platform=iOS Simulator,name=iPhone 15 Pro" \
+          -derivedDataPath DerivedData \
+          CODE_SIGNING_ALLOWED=NO
+          
+    - name: Alternative build approach (if above fails)
+      run: |
+        cd iosApp
+        # Simpler approach without specific device
+        xcodebuild build \
+          -scheme iosApp \
+          -configuration Debug \
+          -sdk iphonesimulator \
           -derivedDataPath DerivedData \
           CODE_SIGNING_ALLOWED=NO
           
@@ -47,4 +63,10 @@ jobs:
       
     - name: Verify Build Output
       run: |
-        ls -la iosApp/DerivedData/Build/Products/Debug-iphonesimulator/
+        if [ -d "iosApp/DerivedData/Build/Products/Debug-iphonesimulator" ]; then
+          echo "✅ Build successful! Contents:"
+          ls -la iosApp/DerivedData/Build/Products/Debug-iphonesimulator/
+        else
+          echo "❌ Build directory not found"
+          ls -la iosApp/DerivedData/Build/Products/ || true
+        fi
