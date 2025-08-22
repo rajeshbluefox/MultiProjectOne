@@ -31,7 +31,7 @@ jobs:
     - name: Build Shared Module for iOS
       run: ./gradlew :shared:compileKotlinIosX64
       
-    - name: Build iOS App for Simulator (Using iPhone 16 Pro)
+    - name: Build iOS App for Simulator
       run: |
         cd iosApp
         xcodebuild build \
@@ -42,8 +42,9 @@ jobs:
           -derivedDataPath DerivedData \
           CODE_SIGNING_ALLOWED=NO
           
-    - name: Run iOS Tests
-      run: ./gradlew :shared:iosTest
+    # REMOVE the iosTest step or replace with:
+    - name: Run Common Tests (JVM)
+      run: ./gradlew :shared:test
       
     - name: Verify Build Output
       run: |
